@@ -33,9 +33,16 @@ export default function Collection() {
             <div className="text-sm font-semibold capitalize">{k}</div>
             <div className="mt-2 text-sm text-zinc-400">
               {data[k].length ? (
-                <ul className="list-inside list-disc space-y-1 text-zinc-200">
+                <ul className="space-y-2">
                   {data[k].map((x) => (
-                    <li key={x.id}>{x.name}</li>
+                    <li key={x.id} className="flex items-center gap-3">
+                      <div className="h-10 w-16 overflow-hidden rounded-lg bg-zinc-900">
+                        {x.background_image ? (
+                          <img src={x.background_image} alt="" className="h-full w-full object-cover" />
+                        ) : null}
+                      </div>
+                      <div className="text-zinc-200">{x.name}</div>
+                    </li>
                   ))}
                 </ul>
               ) : (

@@ -11,6 +11,21 @@ function platformAbbrev(p) {
   return p?.platform?.name?.slice(0, 3) || "";
 }
 
+function formatReleaseDate(dateStr) {
+  if (!dateStr) return "Release date unknown";
+
+  const d = new Date(dateStr + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return "Release date unknown";
+
+  const now = new Date();
+  const twoYearsFromNow = new Date(now);
+  twoYearsFromNow.setFullYear(now.getFullYear() + 2);
+
+  if (d > twoYearsFromNow) return "Release date: TBA";
+  return `Released ${dateStr}`;
+}
+
+
 export default function GameCard({ game }) {
   return (
     <Link
@@ -47,7 +62,7 @@ export default function GameCard({ game }) {
       <div className="p-4">
         <div className="line-clamp-1 text-sm font-semibold">{game.name}</div>
         <div className="mt-1 text-xs text-zinc-400">
-          {game.released ? `Released ${game.released}` : "Release date unknown"}
+          {formatReleaseDate(game.released)}
         </div>
       </div>
     </Link>

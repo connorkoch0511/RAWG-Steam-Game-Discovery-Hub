@@ -7,7 +7,7 @@ import Pagination from "../components/Pagination.jsx";
 import SkeletonCard from "../components/SkeletonCard.jsx";
 
 const SORTS = [
-  { label: "Popular", value: "-added" },
+  { label: "Relevance (default)", value: "-added" }, // we treat -added as "default" for search mode
   { label: "Top Rated", value: "-rating" },
   { label: "Newest", value: "-released" },
 ];
@@ -72,7 +72,10 @@ export default function Discover() {
       const res = await getGames({
         search: nextSearch || undefined,
         page: nextPage,
-        ordering: nextOrdering,
+        ordering:
+          (nextSearch && nextSearch.trim() && nextOrdering === "-added")
+            ? undefined
+            : nextOrdering,
         genres: nextGenre || undefined,
         platforms: nextPlatform || undefined,
         page_size: 24,
@@ -153,12 +156,19 @@ export default function Discover() {
           >
             {SORTS.map((s) => (
               <option key={s.value} value={s.value}>
-                Sort: {s.label}
+                {s.label}
               </option>
             ))}
           </select>
         </div>
       </div>
+
+      {search.trim() ? (
+              <div className="text-xs text-zinc-500">
+                Tip: Search uses relevance by default. Choose “Top Rated” or “Newest” to re-sort within results.
+              </div>
+            ) : null
+      }
 
       <div className="flex flex-col gap-2 md:flex-row">
         <select

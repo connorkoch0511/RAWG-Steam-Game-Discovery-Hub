@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getGame, getScreenshots } from "../lib/rawg.js";
+import { addToList, findListFor, removeFromAll } from "../lib/collection.js";
 
 function Chip({ children }) {
   return (
@@ -16,6 +17,7 @@ export default function GameDetail() {
   const [shots, setShots] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
+  const [list, setList] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -24,6 +26,7 @@ export default function GameDetail() {
       try {
         const [g, s] = await Promise.all([getGame(id), getScreenshots(id)]);
         setGame(g);
+        setList(findListFor(g.id));
         setShots(s.results || []);
       } catch (e) {
         setErr(e.message || "Failed to load game");
@@ -59,6 +62,47 @@ export default function GameDetail() {
               {game.released ? `Released ${game.released}` : "Release date unknown"}{" "}
               {typeof game.rating === "number" ? `• ★ ${game.rating.toFixed(2)}` : ""}
             </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setList(addToList("wishlist", game) && "wishlist")}
+              className={`rounded-xl border px-3 py-2 text-sm ${
+                list === "wishlist" ? "border-emerald-600 bg-emerald-950/40 text-emerald-200" : "border-zinc-800 bg-zinc-950 text-zinc-200"
+              }`}
+            >
+              Wishlist
+            </button>
+
+            <button
+              onClick={() => setList(addToList("playing", game) && "playing")}
+              className={`rounded-xl border px-3 py-2 text-sm ${
+                list === "playing" ? "border-sky-600 bg-sky-950/40 text-sky-200" : "border-zinc-800 bg-zinc-950 text-zinc-200"
+              }`}
+            >
+              Playing
+            </button>
+
+            <button
+              onClick={() => setList(addToList("completed", game) && "completed")}
+              className={`rounded-xl border px-3 py-2 text-sm ${
+                list === "completed" ? "border-violet-600 bg-violet-950/40 text-violet-200" : "border-zinc-800 bg-zinc-950 text-zinc-200"
+              }`}
+            >
+              Completed
+            </button>
+
+            {list ? (
+              <button
+                onClick={() => {
+                  removeFromAll(game.id);
+                  setList(null);
+                }}
+                className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
+              >
+                Remove
+              </button>
+            ) : null}
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
