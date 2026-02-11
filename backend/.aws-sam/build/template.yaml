@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: RAWG proxy API (Mode 2) for Game Discovery Hub
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 15
+    MemorySize: 256
+    Architectures:
+    - x86_64
+Resources:
+  RawgCacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: RawgCache
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: pk
+        AttributeType: S
+      KeySchema:
+      - AttributeName: pk
+        KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+  RawgProxyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: RawgProxyFunction
+      Handler: index.handler
+      Environment:
+        Variables:
+          RAWG_SECRET_NAME: rawg/apiKey
+          RAWG_API_BASE: https://api.rawg.io/api
+          CACHE_TABLE:
+            Ref: RawgCacheTable
+          CACHE_TTL_SECONDS: '21600'
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - secretsmanager:GetSecretValue
+          Resource: '*'
+        - Effect: Allow
+          Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Resource: '*'
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: RawgCacheTable
+      Events:
+        RawgApi:
+          Type: HttpApi
+          Properties:
+            Path: /api/rawg/{proxy+}
+            Method: GET
+    Metadata:
+      SamResourceId: RawgProxyFunction
+Outputs:
+  ApiBaseUrl:
+    Description: Base URL for HTTP API
+    Value:
+      Fn::Sub: https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com
