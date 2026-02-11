@@ -25,7 +25,7 @@ export default function Collection() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Collection</h1>
-      <p className="text-sm text-zinc-400">MVP stores lists in LocalStorage. We’ll upgrade to DynamoDB + login later.</p>
+      <p className="text-sm text-zinc-400">Collections are saved locally in your browser. Account sync coming in a future update.</p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {["wishlist", "playing", "completed"].map((k) => (
