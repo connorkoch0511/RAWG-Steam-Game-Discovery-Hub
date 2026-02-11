@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { getGames, getGenres, getPlatforms } from "../lib/rawg.js";
 import { debounce } from "../lib/debounce.js";
 import GameCard from "../components/GameCard.jsx";
@@ -11,20 +12,40 @@ const SORTS = [
   { label: "Newest", value: "-released" },
 ];
 
+function getParam(searchParams, key, fallback = "") {
+  const v = searchParams.get(key);
+  return v ?? fallback;
+}
+
 export default function Discover() {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [ordering, setOrdering] = useState(SORTS[0].value);
+  const [sp, setSp] = useSearchParams();
+
+  // Read from URL on load
+  const [search, setSearch] = useState(() => getParam(sp, "search", ""));
+  const [page, setPage] = useState(() => Number(getParam(sp, "page", "1")) || 1);
+  const [ordering, setOrdering] = useState(() => getParam(sp, "sort", SORTS[0].value));
+  const [genreId, setGenreId] = useState(() => getParam(sp, "genre", ""));
+  const [platformId, setPlatformId] = useState(() => getParam(sp, "platform", ""));
 
   const [genres, setGenres] = useState([]);
   const [platforms, setPlatforms] = useState([]);
-  const [genreId, setGenreId] = useState("");
-  const [platformId, setPlatformId] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [games, setGames] = useState([]);
   const [count, setCount] = useState(0);
   const [err, setErr] = useState("");
+
+  // Keep URL in sync whenever state changes
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (search) next.set("search", search);
+    if (genreId) next.set("genre", genreId);
+    if (platformId) next.set("platform", platformId);
+    if (ordering) next.set("sort", ordering);
+    if (page && page !== 1) next.set("page", String(page));
+    setSp(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, genreId, platformId, ordering, page]);
 
   useEffect(() => {
     (async () => {
@@ -75,6 +96,25 @@ export default function Discover() {
     [ordering, genreId, platformId]
   );
 
+  // Reload when URL changes (e.g., user pastes link) OR state changes
+  useEffect(() => {
+    // when someone navigates with back/forward, sync state from URL
+    const urlSearch = getParam(sp, "search", "");
+    const urlPage = Number(getParam(sp, "page", "1")) || 1;
+    const urlSort = getParam(sp, "sort", SORTS[0].value);
+    const urlGenre = getParam(sp, "genre", "");
+    const urlPlatform = getParam(sp, "platform", "");
+
+    // only set when different to avoid loops
+    if (urlSearch !== search) setSearch(urlSearch);
+    if (urlPage !== page) setPage(urlPage);
+    if (urlSort !== ordering) setOrdering(urlSort);
+    if (urlGenre !== genreId) setGenreId(urlGenre);
+    if (urlPlatform !== platformId) setPlatformId(urlPlatform);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp]);
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,7 +128,7 @@ export default function Discover() {
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-xl font-semibold">Discover games</h1>
-          <p className="text-sm text-zinc-400">Search, filter, and browse titles with a clean, fast UI.</p>
+          <p className="text-sm text-zinc-400">Search, filter, and browse titles with shareable URLs.</p>
         </div>
 
         <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
@@ -99,7 +139,7 @@ export default function Discover() {
               setSearch(v);
               debouncedLoad(v);
             }}
-            placeholder="Search games… (Halo, Zelda, Elden Ring)"
+            placeholder="Search games…"
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-sm text-zinc-200 outline-none placeholder:text-zinc-600 md:w-[360px]"
           />
 
@@ -160,7 +200,6 @@ export default function Discover() {
             setPlatformId("");
             setOrdering(SORTS[0].value);
             setPage(1);
-            load({ nextPage: 1, nextSearch: "", nextGenre: "", nextPlatform: "", nextOrdering: SORTS[0].value });
           }}
           className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
         >
