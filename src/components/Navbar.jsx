@@ -23,7 +23,6 @@ export default function Navbar() {
           <div className="h-9 w-9 rounded-xl bg-zinc-800" />
           <div>
             <div className="text-sm font-semibold leading-tight">Mist</div>
-            <div className="text-xs text-zinc-400">Search + filters + detail pages</div>
           </div>
         </div>
         <nav className="flex items-center gap-2">
